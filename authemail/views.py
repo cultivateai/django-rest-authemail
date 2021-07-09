@@ -77,7 +77,7 @@ class Signup(APIView):
                 design_work_week_url = f"{settings.BASE_URL}/login?next={workweek_url_next}"
 
                 invite_modal_params = {
-                    "name": "userPreferencesOverlay", "options": {"tab": 0}}
+                    "name": "addTeamMembersModal"}
                 invite_modal_params_json = json.dumps(
                     invite_modal_params).replace(' ', '')
                 invite_url_next = \
