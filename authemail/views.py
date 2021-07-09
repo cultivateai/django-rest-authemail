@@ -1,3 +1,6 @@
+import urllib
+import json
+
 from datetime import date
 
 from django.conf import settings
@@ -39,7 +42,8 @@ class Signup(APIView):
             first_name = serializer.data["first_name"]
             last_name = serializer.data["last_name"]
 
-            must_validate_email = getattr(settings, "AUTH_EMAIL_VERIFICATION", True)
+            must_validate_email = getattr(
+                settings, "AUTH_EMAIL_VERIFICATION", True)
 
             try:
                 user = get_user_model().objects.get(email=email)
@@ -62,10 +66,35 @@ class Signup(APIView):
             user.last_name = last_name
             if not must_validate_email:
                 user.is_verified = True
+
+                ww_modal_params = {
+                    "name": "userPreferencesOverlay", "options": {"tab": 0}}
+                ww_modal_params_json = json.dumps(
+                    ww_modal_params).replace(' ', '')
+                workweek_url_next = \
+                    urllib.parse.quote(
+                        f"/dashboard/team-view?showModal={urllib.parse.quote(ww_modal_params_json)}")
+                design_work_week_url = f"{settings.BASE_URL}/login?next={workweek_url_next}"
+
+                invite_modal_params = {
+                    "name": "userPreferencesOverlay", "options": {"tab": 0}}
+                invite_modal_params_json = json.dumps(
+                    invite_modal_params).replace(' ', '')
+                invite_url_next = \
+                    urllib.parse.quote(
+                        f"/dashboard/team-view?showModal={urllib.parse.quote(invite_modal_params_json)}")
+                invite_team_url = f"{settings.BASE_URL}/login?next={invite_url_next}"
+
                 send_multi_format_email(
                     "welcome_email",
                     {
                         "email": user.email,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                        "user": {"id": str(user.id)},
+                        "base_url": settings.BASE_URL,
+                        "invite_team_url": invite_team_url,
+                        "design_workweek_url": design_work_week_url
                     },
                     target_email=user.email,
                 )
@@ -81,7 +110,8 @@ class Signup(APIView):
                 )
 
                 # Create and associate signup code
-                signup_code = SignupCode.objects.create_signup_code(user, client_ip)
+                signup_code = SignupCode.objects.create_signup_code(
+                    user, client_ip)
                 signup_code.send_signup_email()
 
             content = {
@@ -169,7 +199,8 @@ class Login(APIView):
             if user:
                 if user.is_verified:
                     if user.is_active:
-                        token, _created = Token.objects.get_or_create(user=user)
+                        token, _created = Token.objects.get_or_create(
+                            user=user)
 
                         client_ip, _routable = get_client_ip(request)
                         AuthAuditLog.track(
@@ -189,7 +220,8 @@ class Login(APIView):
             else:
                 # TODO: Log failed attempts and lock account/ask for 2fa
                 #       after certain amount of failed ones.
-                content = {"detail": _("Unable to login with provided credentials.")}
+                content = {"detail": _(
+                    "Unable to login with provided credentials.")}
                 return Response(content, status=status.HTTP_401_UNAUTHORIZED)
 
         else:
@@ -229,7 +261,8 @@ class PasswordReset(APIView):
 
                 if user.is_verified and user.is_active:
                     password_reset_code = (
-                        PasswordResetCode.objects.create_password_reset_code(user)
+                        PasswordResetCode.objects.create_password_reset_code(
+                            user)
                     )
                     password_reset_code.send_password_reset_email()
                     content = {"email": email}
@@ -459,7 +492,8 @@ class PasswordChange(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                user = authenticate(email=user.email, password=current_password)
+                user = authenticate(
+                    email=user.email, password=current_password)
                 if user is None:
                     return Response(
                         {"details": "Invalid password login"},
