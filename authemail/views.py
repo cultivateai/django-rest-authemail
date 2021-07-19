@@ -171,7 +171,7 @@ class SignupVerify(APIView):
 
         # Issue an auth token so that user can set password + other details
         token, _created = Token.objects.get_or_create(user=signup_code.user)
-        django_login(request, signup_code.user)
+        django_login(request, signup_code.user, backend="django.contrib.auth.backends.ModelBackend")
 
         signup_code.delete()
 
