@@ -179,9 +179,9 @@ class SignupVerify(APIView):
             for tv in inviter.teamviews.all():
                 if tv.user != signup_code.user:
                     teamview_user_to_add.append(tv.user)
-        for user in teamview_user_to_add:
-            new_tv = TeamView(owner=signup_code.user, user=user)
-            new_tv.save()
+            for user in teamview_user_to_add:
+                new_tv = TeamView(owner=signup_code.user, user=user)
+                new_tv.save()
 
         # Issue an auth token so that user can set password + other details
         token, _created = Token.objects.get_or_create(user=signup_code.user)
