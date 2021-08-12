@@ -169,19 +169,11 @@ class SignupVerify(APIView):
             content = {"detail": _(message)}
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-        # if signup is from an invitation, default invitee's team view to inviter's
-        from teamalignment.apps.invites.models.invite import Invite
-        from teamalignment.apps.teamviews.models.teamview import TeamView
-        associated_invite = Invite.objects.filter(code=code).first()
-        if associated_invite is not None:
-            inviter = associated_invite.sender
-            teamview_user_to_add = [inviter]
-            for tv in inviter.teamviews.all():
-                if tv.user != signup_code.user:
-                    teamview_user_to_add.append(tv.user)
-            for user in teamview_user_to_add:
-                new_tv = TeamView(owner=signup_code.user, user=user)
-                new_tv.save()
+        # check callback
+        AUTH_VERIFY_CALLBACK = getattr(
+            settings, "AUTH_VERIFY_CALLBACK", None)
+        if AUTH_VERIFY_CALLBACK is not None and hasattr(AUTH_VERIFY_CALLBACK, '__call__'):
+            AUTH_VERIFY_CALLBACK(code)
 
         # Issue an auth token so that user can set password + other details
         token, _created = Token.objects.get_or_create(user=signup_code.user)
