@@ -28,6 +28,8 @@ from authemail.serializers import (EmailChangeSerializer, LoginSerializer,
                                    SignupVerificationSerializer,
                                    UserSerializer)
 
+AUTH_VERIFY_CALLBACK = getattr(settings, "AUTH_VERIFY_CALLBACK", None)
+
 
 class Signup(APIView):
     permission_classes = (AllowAny,)
@@ -170,8 +172,6 @@ class SignupVerify(APIView):
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         # check callback
-        AUTH_VERIFY_CALLBACK = getattr(
-            settings, "AUTH_VERIFY_CALLBACK", None)
         if AUTH_VERIFY_CALLBACK is not None and hasattr(AUTH_VERIFY_CALLBACK, '__call__'):
             AUTH_VERIFY_CALLBACK(code)
 
