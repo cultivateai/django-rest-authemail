@@ -28,7 +28,14 @@ from authemail.serializers import (EmailChangeSerializer, LoginSerializer,
                                    SignupVerificationSerializer,
                                    UserSerializer)
 
+from django.utils.module_loading import import_string
 AUTH_VERIFY_CALLBACK = getattr(settings, "AUTH_VERIFY_CALLBACK", None)
+auth_verify_callback_func = None
+if AUTH_VERIFY_CALLBACK is not None:
+    try:
+        auth_verify_callback_func = import_string(AUTH_VERIFY_CALLBACK)
+    except:
+        auth_verify_callback_func = None
 
 
 class Signup(APIView):
@@ -172,8 +179,8 @@ class SignupVerify(APIView):
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         # check callback
-        if AUTH_VERIFY_CALLBACK is not None and hasattr(AUTH_VERIFY_CALLBACK, '__call__'):
-            AUTH_VERIFY_CALLBACK(code)
+        if auth_verify_callback_func is not None and hasattr(auth_verify_callback_func, '__call__'):
+            auth_verify_callback_func(code)
 
         # Issue an auth token so that user can set password + other details
         token, _created = Token.objects.get_or_create(user=signup_code.user)
